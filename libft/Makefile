@@ -24,7 +24,6 @@ $(NAME): $(OBJ)
 
 clean:
 	@rm -rf $(OBJ)
-	@echo "$(NAME) object files removed."
 
 fclean: clean
 	@rm -f $(NAME)
