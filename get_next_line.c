@@ -6,7 +6,7 @@
 /*   By: sgardner <stephenbgardner@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/09/28 15:05:47 by sgardner          #+#    #+#             */
-/*   Updated: 2017/10/01 00:04:15 by sgardner         ###   ########.fr       */
+/*   Updated: 2017/10/04 18:33:25 by sgardner         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,7 +102,7 @@ int				get_next_line(const int fd, char **line)
 	ssize_t	bytes;
 	int		nl;
 
-	if (fd < 0 || !line || !(file = get_buffer(fd, FALSE)))
+	if (!line || !(file = get_buffer(fd, FALSE)))
 		return (-1);
 	*line = NULL;
 	while (!(nl = build_line(line, file)))
