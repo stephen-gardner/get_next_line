@@ -6,25 +6,16 @@
 /*   By: sgardner <stephenbgardner@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/09/28 15:05:47 by sgardner          #+#    #+#             */
-/*   Updated: 2017/10/04 18:33:25 by sgardner         ###   ########.fr       */
+/*   Updated: 2017/12/01 19:39:51 by sgardner         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static t_file	**get_all_buffers(void)
+static t_file	*get_buffer(t_file **head, int fd, t_bool destroy)
 {
-	static t_file	*head;
-
-	return (&head);
-}
-
-static t_file	*get_buffer(int fd, t_bool destroy)
-{
-	t_file	**head;
 	t_file	*next;
 
-	head = get_all_buffers();
 	while (*head && (*head)->fd != fd)
 		head = &(*head)->next;
 	if (!*head)
@@ -33,12 +24,12 @@ static t_file	*get_buffer(int fd, t_bool destroy)
 			return (NULL);
 		if (!((*head)->buffer = ft_memalloc(BUFF_SIZE + 1)))
 		{
-			free(*head);
+			ft_memdel((void **)head);
 			return (NULL);
 		}
 		(*head)->fd = fd;
 	}
-	else if (destroy)
+	if (destroy)
 	{
 		next = (*head)->next;
 		free((*head)->buffer);
@@ -71,7 +62,7 @@ static t_bool	append(char **line, char *buffer, size_t n)
 	return (TRUE);
 }
 
-static int		build_line(char **line, t_file *file)
+static int		build_line(t_file **head, char **line, t_file *file)
 {
 	char	*buffer;
 	size_t	n;
@@ -83,7 +74,7 @@ static int		build_line(char **line, t_file *file)
 		n++;
 	if (!append(line, buffer, n))
 	{
-		get_buffer(file->fd, TRUE);
+		get_buffer(head, file->fd, TRUE);
 		if (*line)
 			ft_memdel((void **)line);
 		return (-1);
@@ -98,19 +89,20 @@ static int		build_line(char **line, t_file *file)
 
 int				get_next_line(const int fd, char **line)
 {
-	t_file	*file;
-	ssize_t	bytes;
-	int		nl;
+	static t_file	*head;
+	t_file			*file;
+	ssize_t			bytes;
+	int				nl;
 
-	if (!line || !(file = get_buffer(fd, FALSE)))
+	if (!line || !(file = get_buffer(&head, fd, FALSE)))
 		return (-1);
 	*line = NULL;
-	while (!(nl = build_line(line, file)))
+	while (!(nl = build_line(&head, line, file)))
 	{
-		if ((bytes = read(fd, file->buffer, BUFF_SIZE)) <= 0)
+		if ((bytes = read(fd, file->buffer, BUFF_SIZE)) < 1)
 		{
-			get_buffer(fd, TRUE);
-			if (*line && bytes == -1)
+			get_buffer(&head, fd, TRUE);
+			if (*line && bytes < 0)
 				ft_memdel((void **)line);
 			return ((*line) ? 1 : bytes);
 		}
